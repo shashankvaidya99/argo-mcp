@@ -1,3 +1,12 @@
-anthropic
-mcp
-python-dotenv
+# Argo runtime dependencies.
+# Pinned to minimum versions known to support the APIs this project uses.
+
+# MCP SDK — provides the Server, stdio transport, and tool types in server.py.
+mcp>=1.2.0
+
+# Anthropic SDK — used by the tools in tools/ to call claude-sonnet-4-6.
+anthropic>=0.40.0
+
+# Loads ANTHROPIC_API_KEY from a local .env file during development so the
+# key never has to be hardcoded. Optional at runtime; convenient for local use.
+python-dotenv>=1.0.0

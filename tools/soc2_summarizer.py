@@ -97,14 +97,37 @@ def _parse_json(raw_output: str) -> dict:
     """
     Turn Claude's JSON text into a Python dictionary.
 
-    Takes the raw text returned by Claude. Returns the parsed dictionary.
+    Takes the raw text returned by Claude, tolerating a Markdown code fence
+    around the JSON if the model adds one. Returns the parsed dictionary.
     Raises RuntimeError, including the raw text, if the output is not valid
     JSON — so the failure is explicit and debuggable.
     """
+    cleaned = _strip_code_fences(raw_output)
     try:
-        return json.loads(raw_output)
+        return json.loads(cleaned)
     except json.JSONDecodeError as error:
         raise RuntimeError(
             "Claude did not return valid JSON. "
             f"Error: {error}. Raw output:\n{raw_output}"
         ) from error
+
+
+def _strip_code_fences(text: str) -> str:
+    """
+    Remove a Markdown code fence around JSON, if the model added one.
+
+    Takes the raw model text. If it begins with a ``` fence (optionally tagged,
+    such as ```json), this drops the opening fence line and the closing fence
+    line and returns what is between them. Text with no fence is returned
+    unchanged apart from surrounding whitespace.
+    """
+    stripped = text.strip()
+    if not stripped.startswith("```"):
+        return stripped
+
+    lines = stripped.splitlines()
+    lines = lines[1:]  # drop the opening fence (``` or ```json)
+    if lines and lines[-1].strip() == "```":
+        lines = lines[:-1]  # drop the closing fence
+
+    return "\n".join(lines)

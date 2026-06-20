@@ -17,10 +17,20 @@ crashing the server.
 
 import asyncio
 import json
+from pathlib import Path
 
+from dotenv import load_dotenv
 from mcp.server import Server
 from mcp.server.stdio import stdio_server
 import mcp.types as types
+
+
+# Load environment variables (notably ANTHROPIC_API_KEY) from a .env file next
+# to this script, if one exists. The path is resolved relative to this file so
+# it works no matter which directory the MCP client launches the server from.
+# If there is no .env, this does nothing and the key is read from the real
+# environment instead (for example, an MCP client's "env" config block).
+load_dotenv(Path(__file__).resolve().parent / ".env")
 
 
 # The single MCP server instance. The name "argo" is how clients identify us.

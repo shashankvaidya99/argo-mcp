@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "argo": {
+      "command": "/absolute/path/to/argo-mcp/venv/Scripts/python.exe",
+      "args": ["/absolute/path/to/argo-mcp/server.py"]
+    }
+  }
+}

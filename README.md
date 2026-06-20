@@ -236,6 +236,46 @@ On macOS / Linux, use the matching paths
 Once the client restarts, the three Argo tools become available to the
 assistant, which can call them as part of a conversation.
 
+### Claude Code (project-scoped `.mcp.json`)
+
+Claude Code also reads a project-scoped MCP config from a `.mcp.json` file at
+the repository root. A template ships with the repo as `.mcp.json.example`:
+
+```bash
+# From the project root, copy the template and edit the paths
+cp .mcp.json.example .mcp.json
+```
+
+Then edit `.mcp.json` so both paths are **absolute** and point at this clone —
+the virtual environment's Python as `command`, and `server.py` as the argument:
+
+```json
+{
+  "mcpServers": {
+    "argo": {
+      "command": "/absolute/path/to/argo-mcp/venv/Scripts/python.exe",
+      "args": ["/absolute/path/to/argo-mcp/server.py"]
+    }
+  }
+}
+```
+
+Notes:
+
+- **`.mcp.json` is git-ignored** because the paths are machine-specific; commit
+  changes to `.mcp.json.example` instead. Each developer creates their own
+  `.mcp.json` from the template.
+- **No `env` block is needed here.** `server.py` loads `ANTHROPIC_API_KEY` from
+  the project's `.env` file automatically (see [Configuration](#configuration)).
+- **On Windows**, either keep forward slashes (Python accepts them) or escape
+  backslashes as `\\` — a single `\` is not a valid JSON escape.
+
+Start (or restart) Claude Code in the project directory and it will prompt you
+to approve the project's MCP server the first time. Run `/mcp` to confirm
+`argo` is connected; the three tools then appear as
+`mcp__argo__summarize_soc2_report`, `mcp__argo__draft_iso42001_soa_section`,
+and `mcp__argo__evaluate_control_evidence`.
+
 ---
 
 ## Example

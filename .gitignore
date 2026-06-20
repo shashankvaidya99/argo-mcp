@@ -2,4 +2,6 @@ CLAUDE.md
 .env 
 __pycache__/ 
 *.pyc 
-venv/ 
+venv/
+.mcp.json
+

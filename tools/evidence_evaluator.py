@@ -27,6 +27,14 @@ from anthropic.types import Message
 # Claude model used for the evaluation logic, per the project's tech stack.
 MODEL = "claude-sonnet-4-6"
 
+# Input size limits, in characters. A control statement is normally a sentence
+# or two, while an evidence description can be a longer narrative, so they are
+# capped separately. These limits keep the assembled prompt well inside the
+# model's context window and reject oversized input at the boundary before any
+# API call is made.
+MAX_CONTROL_STATEMENT_CHARS = 20_000
+MAX_EVIDENCE_CHARS = 50_000
+
 # Where the evaluation prompt lives. Resolved relative to this file so the tool
 # works no matter which directory the server is launched from.
 PROMPT_PATH = (
@@ -58,6 +66,13 @@ def evaluate_control_evidence(control_statement: str, evidence_description: str)
             "evidence_description is empty — describe the evidence being evaluated."
         )
 
+    _validate_length(
+        "control_statement", control_statement, MAX_CONTROL_STATEMENT_CHARS
+    )
+    _validate_length(
+        "evidence_description", evidence_description, MAX_EVIDENCE_CHARS
+    )
+
     system_prompt = _load_prompt()
     user_message = _build_user_message(control_statement, evidence_description)
     client = anthropic.Anthropic()
@@ -74,6 +89,23 @@ def evaluate_control_evidence(control_statement: str, evidence_description: str)
 
     raw_output = _extract_text(response)
     return _parse_json(raw_output)
+
+
+def _validate_length(field_name: str, text: str, limit: int) -> None:
+    """
+    Check that a text input does not exceed its character limit.
+
+    Takes the field's name (used only to build a clear error message), the text
+    to measure, and the maximum number of characters allowed. Returns nothing on
+    success. Raises ValueError stating the actual size and the limit if the text
+    is too long, so oversized input is rejected loudly at the boundary before any
+    API call is made.
+    """
+    if len(text) > limit:
+        raise ValueError(
+            f"{field_name} is too large — {len(text):,} characters exceeds the "
+            f"{limit:,}-character limit. Trim the input and try again."
+        )
 
 
 def _build_user_message(control_statement: str, evidence_description: str) -> str:

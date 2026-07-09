@@ -26,6 +26,13 @@ from anthropic.types import Message
 # Claude model used for the drafting logic, per the project's tech stack.
 MODEL = "claude-sonnet-4-6"
 
+# Input size limits, in characters (and count for the controls list). These caps
+# keep the assembled prompt well inside the model's context window and reject
+# oversized input at the boundary before any API call is made.
+MAX_DESCRIPTION_CHARS = 50_000
+MAX_CONTROLS = 100
+MAX_CONTROL_CHARS = 500
+
 # Where the SoA prompt lives. Resolved relative to this file so the tool works
 # no matter which directory the server is launched from.
 PROMPT_PATH = (
@@ -55,6 +62,9 @@ def draft_iso42001_soa_section(ai_system_description: str, controls: list) -> di
             "ai_system_description is empty — describe the AI system in scope."
         )
 
+    _validate_length(
+        "ai_system_description", ai_system_description, MAX_DESCRIPTION_CHARS
+    )
     _validate_controls(controls)
 
     system_prompt = _load_prompt()
@@ -75,22 +85,50 @@ def draft_iso42001_soa_section(ai_system_description: str, controls: list) -> di
     return _parse_json(raw_output)
 
 
+def _validate_length(field_name: str, text: str, limit: int) -> None:
+    """
+    Check that a text input does not exceed its character limit.
+
+    Takes the field's name (used only to build a clear error message), the text
+    to measure, and the maximum number of characters allowed. Returns nothing on
+    success. Raises ValueError stating the actual size and the limit if the text
+    is too long, so oversized input is rejected loudly at the boundary before any
+    API call is made.
+    """
+    if len(text) > limit:
+        raise ValueError(
+            f"{field_name} is too large — {len(text):,} characters exceeds the "
+            f"{limit:,}-character limit. Trim the input and try again."
+        )
+
+
 def _validate_controls(controls: list) -> None:
     """
     Check that the controls argument is a non-empty list of strings.
 
     Takes the controls value passed by the caller. Returns nothing on success.
     Raises ValueError with a clear message if the value is not a list, is
-    empty, or contains any item that is not a string — so bad input fails
-    loudly at the boundary instead of producing a confusing prompt.
+    empty, holds more than MAX_CONTROLS items, contains any item that is not a
+    string, or contains a control longer than MAX_CONTROL_CHARS — so bad or
+    oversized input fails loudly at the boundary instead of producing a
+    confusing or overlong prompt.
     """
     if not isinstance(controls, list) or not controls:
         raise ValueError(
             "controls must be a non-empty list of ISO 42001 control references."
         )
 
+    if len(controls) > MAX_CONTROLS:
+        raise ValueError(
+            f"controls has too many items — {len(controls):,} exceeds the "
+            f"limit of {MAX_CONTROLS}. Reduce the number of controls and try again."
+        )
+
     if not all(isinstance(control, str) for control in controls):
         raise ValueError("Every item in controls must be a string.")
+
+    for index, control in enumerate(controls):
+        _validate_length(f"controls[{index}]", control, MAX_CONTROL_CHARS)
 
 
 def _build_user_message(ai_system_description: str, controls: list) -> str:

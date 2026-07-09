@@ -21,6 +21,13 @@ from anthropic.types import Message
 # Claude model used for the audit logic, per the project's tech stack.
 MODEL = "claude-sonnet-4-6"
 
+# Maximum size of the report text we accept, in characters. A SOC 2 Type II
+# report can run to 100+ pages, so this cap is generous; at roughly 4 characters
+# per token it stays well inside the model's context window while leaving room
+# for the system prompt and the response. Oversized input is rejected at the
+# boundary before any API call is made.
+MAX_REPORT_CHARS = 500_000
+
 # Where the auditor prompt lives. Resolved relative to this file so the tool
 # works no matter which directory the server is launched from.
 PROMPT_PATH = (
@@ -47,6 +54,8 @@ def summarize_soc2_report(report_text: str) -> dict:
             "report_text is empty — provide the SOC 2 report text to summarize."
         )
 
+    _validate_length("report_text", report_text, MAX_REPORT_CHARS)
+
     system_prompt = _load_prompt()
     client = anthropic.Anthropic()
 
@@ -62,6 +71,23 @@ def summarize_soc2_report(report_text: str) -> dict:
 
     raw_output = _extract_text(response)
     return _parse_json(raw_output)
+
+
+def _validate_length(field_name: str, text: str, limit: int) -> None:
+    """
+    Check that a text input does not exceed its character limit.
+
+    Takes the field's name (used only to build a clear error message), the text
+    to measure, and the maximum number of characters allowed. Returns nothing on
+    success. Raises ValueError stating the actual size and the limit if the text
+    is too long, so oversized input is rejected loudly at the boundary before any
+    API call is made.
+    """
+    if len(text) > limit:
+        raise ValueError(
+            f"{field_name} is too large — {len(text):,} characters exceeds the "
+            f"{limit:,}-character limit. Trim the input and try again."
+        )
 
 
 def _load_prompt() -> str:

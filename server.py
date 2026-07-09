@@ -62,6 +62,7 @@ async def list_tools() -> list[types.Tool]:
                     "report_text": {
                         "type": "string",
                         "description": "The full text of the SOC 2 report to summarize.",
+                        "maxLength": 500000,
                     }
                 },
                 "required": ["report_text"],
@@ -80,10 +81,12 @@ async def list_tools() -> list[types.Tool]:
                     "ai_system_description": {
                         "type": "string",
                         "description": "Description of the AI system in scope.",
+                        "maxLength": 50000,
                     },
                     "controls": {
                         "type": "array",
-                        "items": {"type": "string"},
+                        "items": {"type": "string", "maxLength": 500},
+                        "maxItems": 100,
                         "description": "List of ISO 42001 controls to address.",
                     },
                 },
@@ -104,10 +107,12 @@ async def list_tools() -> list[types.Tool]:
                     "control_statement": {
                         "type": "string",
                         "description": "The control being tested.",
+                        "maxLength": 20000,
                     },
                     "evidence_description": {
                         "type": "string",
                         "description": "Description of the evidence provided.",
+                        "maxLength": 50000,
                     },
                 },
                 "required": ["control_statement", "evidence_description"],

@@ -323,6 +323,26 @@ exception returns (abridged):
 
 ---
 
+## Data Handling
+
+Every tool call sends the input you provide (report text, system
+descriptions, control statements, evidence descriptions) to the Anthropic API
+for processing. This data leaves your local machine.
+
+Before using Argo with confidential material — SOC 2 reports, internal AI
+system descriptions, or audit evidence covered by an NDA — confirm this is
+acceptable under your organization's data handling policies and any relevant
+client agreements. For regulated or highly sensitive use cases, consider
+Anthropic's enterprise agreements with zero-retention terms, or a self-hosted
+deployment via AWS Bedrock or Google Vertex AI, where data stays inside your
+own cloud boundary.
+
+Argo does not log, store, or retain any input or output itself — each tool
+call is stateless. The only party receiving the data is the Anthropic API, per
+standard API terms.
+
+---
+
 ## Limitations
 
 - Outputs are **AI-generated drafts**, not assurance opinions or legal advice.

@@ -1,0 +1,109 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "SOC 2 report summary",
+  "description": "Structured output of the summarize_soc2_report tool. Mirrors the exact contract in prompts/soc2_summarizer_prompt.txt.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "service_organization_name",
+    "audit_period",
+    "opinion_type",
+    "trust_services_criteria",
+    "key_exceptions",
+    "cuecs",
+    "subservice_organizations",
+    "risk_flags"
+  ],
+  "properties": {
+    "service_organization_name": {
+      "type": "string",
+      "description": "Legal name of the service organization the report covers."
+    },
+    "audit_period": {
+      "type": "string",
+      "description": "Period covered: a date range for a Type II report, or an 'as of' date for a Type I."
+    },
+    "opinion_type": {
+      "type": "string",
+      "description": "The service auditor's opinion, or 'Not stated' if it cannot be determined.",
+      "enum": [
+        "Unqualified",
+        "Qualified",
+        "Adverse",
+        "Disclaimer",
+        "Not stated"
+      ]
+    },
+    "trust_services_criteria": {
+      "type": "array",
+      "description": "Trust Services Criteria categories in scope.",
+      "items": {
+        "type": "string",
+        "enum": [
+          "Security",
+          "Availability",
+          "Processing Integrity",
+          "Confidentiality",
+          "Privacy"
+        ]
+      }
+    },
+    "key_exceptions": {
+      "type": "array",
+      "description": "Testing exceptions, deviations, or findings noted in the report.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["control_area", "description", "management_response"],
+        "properties": {
+          "control_area": {
+            "type": "string",
+            "description": "The control or control area where the exception was noted."
+          },
+          "description": {
+            "type": "string",
+            "description": "What the testing exception, deviation, or finding was."
+          },
+          "management_response": {
+            "type": "string",
+            "description": "Management's response if the report includes one, otherwise an empty string."
+          }
+        }
+      }
+    },
+    "cuecs": {
+      "type": "array",
+      "description": "Complementary User Entity Controls, each stated as a short sentence.",
+      "items": {"type": "string"}
+    },
+    "subservice_organizations": {
+      "type": "array",
+      "description": "Subservice organizations named in the report.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "service_provided", "treatment"],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Name of the subservice organization."
+          },
+          "service_provided": {
+            "type": "string",
+            "description": "What service they provide to the service organization."
+          },
+          "treatment": {
+            "type": "string",
+            "description": "How the report handles them: 'inclusive', 'carve-out', or 'Not stated'.",
+            "enum": ["inclusive", "carve-out", "Not stated"]
+          }
+        }
+      }
+    },
+    "risk_flags": {
+      "type": "array",
+      "description": "Concise auditor-style flags relevant to a reliance decision.",
+      "items": {"type": "string"}
+    }
+  }
+}

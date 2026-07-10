@@ -1,0 +1,55 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Control evidence evaluation",
+  "description": "Structured output of the evaluate_control_evidence tool. Mirrors the exact contract in prompts/evidence_evaluator_prompt.txt.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "sufficiency_rating",
+    "coverage_assessment",
+    "gaps_identified",
+    "recommended_additional_evidence",
+    "framework_mapping"
+  ],
+  "properties": {
+    "sufficiency_rating": {
+      "type": "string",
+      "description": "How well the evidence supports the control.",
+      "enum": ["Sufficient", "Partially Sufficient", "Insufficient"]
+    },
+    "coverage_assessment": {
+      "type": "string",
+      "description": "A 2 to 4 sentence narrative on what the evidence does and does not demonstrate."
+    },
+    "gaps_identified": {
+      "type": "array",
+      "description": "Specific gaps between what the control requires and what the evidence shows.",
+      "items": {"type": "string"}
+    },
+    "recommended_additional_evidence": {
+      "type": "array",
+      "description": "Concrete additional evidence that would close the gaps and raise the rating.",
+      "items": {"type": "string"}
+    },
+    "framework_mapping": {
+      "type": "object",
+      "description": "The most relevant reference in each framework, or 'No direct mapping'.",
+      "additionalProperties": false,
+      "required": ["soc2", "iso_42001", "nist_ai_rmf"],
+      "properties": {
+        "soc2": {
+          "type": "string",
+          "description": "The most relevant SOC 2 Trust Services Criteria reference(s) and why."
+        },
+        "iso_42001": {
+          "type": "string",
+          "description": "The most relevant ISO/IEC 42001:2023 Annex A control reference(s) and why."
+        },
+        "nist_ai_rmf": {
+          "type": "string",
+          "description": "The most relevant NIST AI RMF function and category and why."
+        }
+      }
+    }
+  }
+}

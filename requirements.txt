@@ -10,3 +10,7 @@ anthropic>=0.40.0
 # Loads ANTHROPIC_API_KEY from a local .env file during development so the
 # key never has to be hardcoded. Optional at runtime; convenient for local use.
 python-dotenv>=1.0.0
+
+# JSON Schema validator — used by the tools in tools/ to check that Claude's
+# output matches the contracts in schemas/ before the result is returned.
+jsonschema>=4.21.0

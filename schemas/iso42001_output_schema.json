@@ -1,0 +1,60 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ISO 42001 Statement of Applicability section",
+  "description": "Structured output of the draft_iso42001_soa_section tool. Mirrors the exact contract in prompts/iso42001_soa_prompt.txt.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["soa_sections"],
+  "properties": {
+    "soa_sections": {
+      "type": "array",
+      "description": "One Statement of Applicability entry per control, in the order the controls were given.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "control_reference",
+          "control_title",
+          "applicability_decision",
+          "justification",
+          "implementation_status",
+          "evidence_pointer"
+        ],
+        "properties": {
+          "control_reference": {
+            "type": "string",
+            "description": "The Annex A control reference, e.g. 'A.6.2.4'."
+          },
+          "control_title": {
+            "type": "string",
+            "description": "The Annex A control title, or the control as given if unknown."
+          },
+          "applicability_decision": {
+            "type": "string",
+            "description": "Whether the control applies to the AI system described.",
+            "enum": ["Applicable", "Not Applicable"]
+          },
+          "justification": {
+            "type": "string",
+            "description": "A 2 to 4 sentence narrative explaining the applicability decision."
+          },
+          "implementation_status": {
+            "type": "string",
+            "description": "The drafted implementation status for the organization to confirm.",
+            "enum": [
+              "Implemented",
+              "Partially Implemented",
+              "Planned",
+              "Not Implemented",
+              "Not Applicable"
+            ]
+          },
+          "evidence_pointer": {
+            "type": "string",
+            "description": "The type of evidence that would demonstrate the control; describes the expected artifact, does not assert it exists."
+          }
+        }
+      }
+    }
+  }
+}

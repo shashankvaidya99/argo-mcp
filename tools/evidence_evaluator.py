@@ -21,6 +21,7 @@ import json
 from pathlib import Path
 
 import anthropic
+import jsonschema
 from anthropic.types import Message
 
 
@@ -41,6 +42,15 @@ PROMPT_PATH = (
     Path(__file__).resolve().parent.parent
     / "prompts"
     / "evidence_evaluator_prompt.txt"
+)
+
+# Where the output JSON Schema lives. Resolved relative to this file for the
+# same reason as the prompt path. Claude's output is validated against this
+# schema before the tool returns it.
+SCHEMA_PATH = (
+    Path(__file__).resolve().parent.parent
+    / "schemas"
+    / "evidence_output_schema.json"
 )
 
 
@@ -88,7 +98,9 @@ def evaluate_control_evidence(control_statement: str, evidence_description: str)
         raise RuntimeError(f"Claude API call failed: {error}") from error
 
     raw_output = _extract_text(response)
-    return _parse_json(raw_output)
+    result = _parse_json(raw_output)
+    _validate_output(result, raw_output)
+    return result
 
 
 def _validate_length(field_name: str, text: str, limit: int) -> None:
@@ -136,6 +148,47 @@ def _load_prompt() -> str:
         raise FileNotFoundError(f"Prompt file not found at {PROMPT_PATH}")
 
     return PROMPT_PATH.read_text(encoding="utf-8")
+
+
+def _load_schema() -> dict:
+    """
+    Read and parse the output JSON Schema from the schemas/ folder.
+
+    Takes no arguments. Returns the schema as a dictionary. Raises
+    FileNotFoundError if the schema file is missing, and RuntimeError if the
+    file is present but not valid JSON — so a misconfigured install fails loudly
+    instead of silently skipping validation.
+    """
+    if not SCHEMA_PATH.exists():
+        raise FileNotFoundError(f"Schema file not found at {SCHEMA_PATH}")
+
+    try:
+        return json.loads(SCHEMA_PATH.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as error:
+        raise RuntimeError(
+            f"Schema file at {SCHEMA_PATH} is not valid JSON: {error}"
+        ) from error
+
+
+def _validate_output(data: dict, raw_output: str) -> None:
+    """
+    Check that the parsed output matches the tool's JSON Schema.
+
+    Takes the dictionary parsed from Claude's response and the raw text it came
+    from (used only to make the error debuggable). Returns nothing on success.
+    Raises RuntimeError naming the offending field and including the raw output
+    if the data does not match evidence_output_schema.json — so a malformed
+    evaluation fails loudly instead of being returned to the caller.
+    """
+    schema = _load_schema()
+    try:
+        jsonschema.validate(instance=data, schema=schema)
+    except jsonschema.ValidationError as error:
+        raise RuntimeError(
+            "Claude's output did not match the expected schema. "
+            f"Problem at '{error.json_path}': {error.message}. "
+            f"Raw output:\n{raw_output}"
+        ) from error
 
 
 def _extract_text(response: Message) -> str:
